@@ -1,14 +1,14 @@
 def main():
     import argparse
-    from .core import encrypt, decrypt
+    # from .core import encrypt, decrypt
 
-    parser = argparse.ArgumentParser(prog="ciphercon")
-    parser.add_argument("mode", choices=["encrypt", "decrypt"])
-    parser.add_argument("text")
+    # parser = argparse.ArgumentParser(prog="ciphercon")
+    # parser.add_argument("mode", choices=["encrypt", "decrypt"])
+    # parser.add_argument("text")
 
-    args = parser.parse_args()
+    # args = parser.parse_args()
 
-    if args.mode == "encrypt":
-        print(encrypt(args.text))
-    else:
-        print(decrypt(args.text))
+    # if args.mode == "encrypt":
+    #     print(encrypt(args.text))
+    # else:
+    #     print(decrypt(args.text))

@@ -1,1 +1,1 @@
-from .core import encrypt, decrypt
+from .core import Connection, create_connection, finish_connection, get_public_key, get_connection
