@@ -1,0 +1,16 @@
+[project]
+name = "ciphercon"
+version = "0.1.0"
+description = "Simple cipher tool with API and CLI"
+authors = [
+  { name="noone-075", email="developpeur.faucon2@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.12"
+
+[project.scripts]
+ciphercon = "ciphercon.cli:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
