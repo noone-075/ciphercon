@@ -1,89 +1,234 @@
+import base64
+import os
+import json
 from pathlib import Path
 
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey, RSAPrivateKey
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+# =========================
+# Config path
+# =========================
 config_path = Path.home() / ".ciphercon"
+config_path.mkdir(exist_ok=True)
 
 
+# =========================
+# Key derivation (for passwords)
+# =========================
+def _derive_key(password: bytes, salt: bytes) -> bytes:
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100_000,
+    )
+    return kdf.derive(password)
+
+
+# =========================
+# Setup RSA keys
+# =========================
 def setup():
-    # creating a private + public key pair
-    pass
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    (config_path / "private_key.pem").write_bytes(private_pem)
+
+    public_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    (config_path / "public_key.pem").write_bytes(public_pem)
 
 
-def __asymmetric_encrypt(plaintext: str, publicKey: str) -> str:
-    # encrypt the plaintext with the public key and return the ciphertext
-    return "asymmetric_ciphertext"
+# =========================
+# RSA
+# =========================
+def __asymmetric_encrypt(plaintext: bytes, publicKey: bytes) -> bytes:
+    public_key = serialization.load_pem_public_key(publicKey)
+
+    ciphertext = public_key.encrypt( # pyright: ignore[reportAttributeAccessIssue]
+        plaintext,
+        padding.OAEP(
+            mgf=padding.MGF1(hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    )
+    return base64.b64encode(ciphertext)
 
 
-def __asymmetric_decrypt(ciphertext: str, privateKey: str) -> str:
-    # decrypt the ciphertext with the private key and return the plaintext
-    return "asymmetric_plaintext"
+def __asymmetric_decrypt(ciphertext: bytes, privateKey: bytes) -> bytes:
+    private_key = serialization.load_pem_private_key(
+        privateKey,
+        password=None,
+    )
+
+    return private_key.decrypt( # pyright: ignore[reportAttributeAccessIssue]
+        base64.b64decode(ciphertext),
+        padding.OAEP(
+            mgf=padding.MGF1(hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    )
 
 
-def __encrypt(plaintext: str, key: str | None) -> str:
-    # encrypt the plaintext with the key and return the ciphertext
-    return "ciphertext"
+# =========================
+# AES-GCM (safe)
+# =========================
+def aes_encrypt(plaintext: bytes, key: bytes | None) -> bytes:
+    if not key:
+        return plaintext
+
+    aesgcm = AESGCM(key)
+    nonce = os.urandom(12)
+
+    ciphertext = aesgcm.encrypt(nonce, plaintext, None)
+    return base64.b64encode(nonce + ciphertext)
 
 
-def __decrypt(ciphertext: str, key: str | None) -> str:
-    # decrypt the ciphertext with the key and return the plaintext
-    return "plaintext"
+def aes_decrypt(ciphertext: bytes, key: bytes | None) -> bytes:
+    if not key:
+        return ciphertext
+
+    data = base64.b64decode(ciphertext)
+    nonce = data[:12]
+    ct = data[12:]
+
+    aesgcm = AESGCM(key)
+    return aesgcm.decrypt(nonce, ct, None)
 
 
+# =========================
+# Connection class
+# =========================
 class Connection:
-    def __init__(self, name, password=None) -> None:
+    def __init__(self, name: str, password: str | None = None) -> None:
         self.name = name
         self.password = password
+        self.symmetricKey: bytes | None = None
 
-    def encrypt(self, plaintext: str) -> str:
-        # encrypt the plaintext with the symmetric key and return the ciphertext
-        return __encrypt(plaintext, self.symmetricKey)
+    def encrypt(self, plaintext: bytes) -> bytes:
+        if not self.symmetricKey:
+            raise ValueError("No symmetric key loaded")
+        return aes_encrypt(plaintext, self.symmetricKey)
 
-    def decrypt(self, ciphertext: str) -> str:
-        # decrypt the ciphertext with the symmetric key and return the plaintext
-        return __decrypt(ciphertext, self.symmetricKey)
+    def decrypt(self, ciphertext: bytes) -> bytes:
+        if not self.symmetricKey:
+            raise ValueError("No symmetric key loaded")
+        return aes_decrypt(ciphertext, self.symmetricKey)
 
-    def __register(self, symmetricKey):
-        # register the connection in storage
+    def _register(self, symmetricKey: bytes):
         self.symmetricKey = symmetricKey
-        cryptedKey = __encrypt("KEY:" + symmetricKey, self.password)
-        (config_path / self.name).write_text(cryptedKey)
 
-    def __load_key(self):
-        # load the symmetric key from storage
-        cryptedKey = (config_path / self.name).read_text()
-        rawKey = __decrypt(cryptedKey, self.password)
-        if not rawKey.startswith("KEY:"):
-            raise ValueError("Invalid key format / Wrong password")
-        self.symmetricKey = rawKey[4:]  # Remove "KEY:" prefix
+        data = {"key": base64.b64encode(symmetricKey).decode()}
+
+        if self.password:
+            salt = os.urandom(16)
+            key = _derive_key(self.password.encode(), salt)
+
+            encrypted = aes_encrypt(json.dumps(data).encode(), key)
+
+            payload = {
+                "salt": base64.b64encode(salt).decode(),
+                "data": encrypted.decode(),
+            }
+
+            (config_path / f"{self.name}.enc").write_text(json.dumps(payload))
+        else:
+            (config_path / f"{self.name}.json").write_text(json.dumps(data))
+
+    def _load_key(self):
+        if self.password:
+            path = config_path / f"{self.name}.enc"
+            if not path.exists():
+                raise FileNotFoundError("Encrypted key not found")
+
+            payload = json.loads(path.read_text())
+
+            salt = base64.b64decode(payload["salt"])
+            key = _derive_key(self.password.encode(), salt)
+
+            decrypted = aes_decrypt(payload["data"].encode(), key)
+            data = json.loads(decrypted)
+
+            self.symmetricKey = base64.b64decode(data["key"])
+
+        else:
+            path = config_path / f"{self.name}.json"
+            if not path.exists():
+                raise FileNotFoundError("Key not found")
+
+            data = json.loads(path.read_text())
+            self.symmetricKey = base64.b64decode(data["key"])
 
 
-def create_connection(name, othersPublicKey, password=None) -> tuple[Connection, str]:
-    # create a random symmetric key and encrypt it with the other person's public key
-    symmetricKey = "symmetric_key"
-    encryptedSymmetricKey = __asymmetric_encrypt(symmetricKey, othersPublicKey)
-    connection = Connection(name, password)
-    connection.__register(symmetricKey)
-    return connection, encryptedSymmetricKey
+# =========================
+# Connection API
+# =========================
+def create_connection(name: str, othersPublicKey: bytes, password=None):
+    symmetricKey = os.urandom(32)
+
+    encryptedSymmetricKey = __asymmetric_encrypt(
+        symmetricKey, othersPublicKey
+    )
+
+    conn = Connection(name, password)
+    conn._register(symmetricKey)
+
+    return conn, encryptedSymmetricKey
 
 
-def finish_connection(name, encryptedSymmetricKey, password=None) -> Connection:
-    # decrypt the symmetric key with our private key and store it for later use
-    symmetricKey = __asymmetric_decrypt(encryptedSymmetricKey, __get_private_key())
-    connection = Connection(name, password)
-    connection.__register(symmetricKey)
-    return connection
+def finish_connection(name, encryptedSymmetricKey, password=None):
+    private_key_pem = (config_path / "private_key.pem").read_bytes()
+
+    symmetricKey = __asymmetric_decrypt(
+        encryptedSymmetricKey, private_key_pem
+    )
+
+    conn = Connection(name, password)
+    conn._register(symmetricKey)
+
+    return conn
 
 
-def get_connection(name, password=None) -> Connection:
-    connection = Connection(name, password)
-    connection.__load_key()
-    return connection
+def get_connection(name, password=None):
+    conn = Connection(name, password)
+    conn._load_key()
+    return conn
 
 
-def get_public_key() -> str:
-    # give our public key to the other person
-    return "public_key"
+# =========================
+# Key access
+# =========================
+def get_public_key() -> bytes:
+    return (config_path / "public_key.pem").read_bytes()
 
 
-def __get_private_key() -> str:
-    # get our private key to decrypt the symmetric key sent by the other person
-    return "private_key"
+def _get_private_key() -> bytes:
+    return (config_path / "private_key.pem").read_bytes()
+
+
+# =========================
+# CLI helpers (testing only)
+# =========================
+def encrypt(plaintext: bytes) -> bytes:
+    key = b"0123456789abcdef0123456789abcdef"  # exactly 32 bytes  # OK for testing
+    return aes_encrypt(plaintext, key)
+
+
+def decrypt(ciphertext: bytes) -> bytes:
+    key = b"0123456789abcdef0123456789abcdef"  # exactly 32 bytes  # OK for testing
+    return aes_decrypt(ciphertext, key)

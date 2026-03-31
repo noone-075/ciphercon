@@ -1,16 +1,44 @@
 [project]
 name = "ciphercon"
 version = "0.1.0"
-description = "Simple cipher tool with API and CLI"
-authors = [
-  { name="noone-075", email="developpeur.faucon2@gmail.com" }
-]
+description = "Secure peer-to-peer encryption with AES-256-GCM and RSA-2048"
 readme = "README.md"
 requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+  { name = "noone-075", email = "developpeur.faucon2@gmail.com" }
+]
+keywords = ["encryption", "cryptography", "aes", "rsa", "cipher", "security"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security :: Cryptography",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "cryptography>=41.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "black>=23.0", "mypy>=1.0"]
+
+[project.urls]
+Homepage = "https://github.com/noone-075/ciphercon"
+Repository = "https://github.com/noone-075/ciphercon.git"
+Issues = "https://github.com/noone-075/ciphercon/issues"
+Changelog = "https://github.com/noone-075/ciphercon/releases"
 
 [project.scripts]
 ciphercon = "ciphercon.cli:main"
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["ciphercon"]
