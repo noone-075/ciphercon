@@ -8,6 +8,9 @@ license = { text = "MIT" }
 authors = [
   { name = "noone-075", email = "developpeur.faucon2@gmail.com" }
 ]
+contributors = [
+  { name = "sovietdevelopment", email = "croissanttheultimate@gmai"}
+]
 keywords = ["encryption", "cryptography", "aes", "rsa", "cipher", "security"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -22,6 +25,7 @@ classifiers = [
 ]
 dependencies = [
   "cryptography>=41.0.0",
+  "colorama">=4.6.0
 ]
 
 [project.optional-dependencies]
