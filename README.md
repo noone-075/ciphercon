@@ -4,12 +4,12 @@ Secure peer-to-peer encryption library using **AES-256-GCM** (symmetric) and **R
 
 ## Features
 
-- 🔐 **AES-256-GCM**: Authenticated symmetric encryption for fast, secure messaging
-- 🔑 **RSA-2048 with OAEP**: Asymmetric encryption for secure key exchange
-- 🛡️ **PBKDF2-HMAC-SHA256**: Password-based key derivation for encrypted storage
-- 💾 **Persistent connections**: Store encrypted symmetric keys locally
-- 🖥️ **CLI & API**: Use as a library or command-line tool
-- ✅ **Type hints**: Full type annotations for better IDE support
+- **AES-256-GCM**: Authenticated symmetric encryption for fast, secure messaging
+- **RSA-2048 with OAEP**: Asymmetric encryption for secure key exchange
+- **PBKDF2-HMAC-SHA256**: Password-based key derivation for encrypted storage
+- **Persistent connections**: Store encrypted symmetric keys locally
+- **CLI & API**: Use as a library or command-line tool
+- **Type hints**: Full type annotations for better IDE support
 
 ## Installation
 
@@ -82,6 +82,10 @@ encrypted = conn.encrypt(b"Message")
 ```
 
 ## CLI Usage
+
+```
+command + command args
+```
 
 ### Generate RSA keys
 ```bash
@@ -156,3 +160,6 @@ MIT License - See LICENSE file
 ## Author
 
 [@noone-075](https://github.com/noone-075)
+
+## Contributor:
+[@SovietUnion](https://github.com/HamSandwichEater)
