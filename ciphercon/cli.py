@@ -18,12 +18,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from colorama import (
-Fore,
-Back,
-Style,
-init
-)
+from colorama import *
 
 from .core import (
     create_connection,
