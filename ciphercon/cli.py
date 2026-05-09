@@ -1,6 +1,28 @@
+# hi noone, if I forgot to add colors to any messages, just tell me 
+
+# =========================
+# COLOR CONVENTIONS
+# =========================
+
+# RED: ERROR MSG
+# GREEN: SUCCESSFUL ACTIONS
+# MAGENTA: DISCONNECT
+# CYAN: FILE OPERATIONS
+# YELLOW: HELP
+
+# =========================
+# IMPORTS
+# =========================
+
 import sys
 import tempfile
 from pathlib import Path
+
+from colorama import (
+Fore,
+Back,
+Style
+)
 
 from .core import (
     create_connection,
@@ -10,6 +32,7 @@ from .core import (
     setup
 )
 
+init(autoreset=True)
 
 # =========================
 # Helpers
@@ -28,27 +51,71 @@ def is_file_path(text: str) -> Path | None:
     return p if p.exists() and p.is_file() else None
 
 
+def rle_compress(data_in: str): # Uses RLE data compression algorithm (Run Length Encoding)
+    datastream = data_in
+    result = ''
+    count = 1
+    current_char = datastream[0]
+    
+    for i in range(1, len(datastream)):
+      if datastream[i] == current_char:
+        count += 1
+      else:
+        result += f"{current_char}"
+        if count > 1:
+          result += f"-{count}"
+        else:
+          result += ""
+        current_char = datastream[i]
+        count = 1
+    
+    result += f"{current_char}"
+    if count > 1:
+      result += f"-{count}"
+
+
+
+def rle_decompress(data_in: str): # Uses reverse-RLE data compression algorithm (Run Length Encoding)
+    datastream = data_in
+    d = 0
+    c = 0
+    
+    print('Data Stream :', datastream)
+    print('Decoding RLE :', end = '')
+    
+    for i in range(len(datastream)):
+       if c < len(datastream):
+          if datastream[c] != '-':
+             if c > 0 and datastream[c-1] == '-':
+                 d = int(datastream[c])
+                 for i in range(d-1):
+                    print(datastream[c-2], end = '')
+                 c = c + 1
+             print(datastream[c], end = '')
+          c = c + 1
+
+
 # =========================
 # Commands
 # =========================
 def cmd_create(name: str):
     pubkey = read_multiline("Paste OTHER person's public key")
-    password = ask("Password (optional): ") or None
+    password = ask(Style.BRIGHT + Fore. + "Password (optional): ") or None
 
     conn, encrypted_key = create_connection(name, pubkey, password)
 
-    print("\n✅ Connection created.")
-    print("\n📤 Send this encrypted symmetric key to the other person:\n")
+    print(Style.BRIGHT + Fore.GREEN + "\nConnection created.")
+    print(Style.BRIGHT + Fore.YELLOW + "\nSend this encrypted symmetric key to the other person:\n")
     print(encrypted_key.decode())
 
 
 def cmd_finish(name: str):
     encrypted_key = read_multiline("Paste encrypted symmetric key")
-    password = ask("Password (optional): ") or None
+    password = ask("(Optional) password: ") or None
 
     finish_connection(name, encrypted_key, password)
 
-    print("✅ Connection finished.")
+    print(Style.BRIGHT + Fore.GREEN + "Connection finished.")
 
 
 def cmd_key():
@@ -60,12 +127,12 @@ def cmd_connect(name: str):
 
     conn = get_connection(name, password)
 
-    print(f"✅ Connected to '{name}'")
-    print("Type messages. Ctrl+D to exit.\n")
+    print(Style.BRIGHT + Fore.GREEN + f"Connected to '{name}'")
+    print(Style.BRIGHT + Fore.YELLOW + "Type messages. Ctrl+D to exit.\n")
 
     try:
         while True:
-            text = input("> ")
+            text = input("CIPHERCON-> ")
 
             if text.startswith("encrypt "):
                 data = text[len("encrypt ") :]
@@ -79,7 +146,7 @@ def cmd_connect(name: str):
                     tmp.write(encrypted)
                     tmp.close()
 
-                    print(f"📁 Encrypted file → {tmp.name}")
+                    print(Style.BRIGHT + Fore.CYAN + f"Encrypted file → {tmp.name}")
                 else:
                     encrypted = conn.encrypt(data.encode())
                     print(encrypted.decode())
@@ -96,16 +163,16 @@ def cmd_connect(name: str):
                     tmp.write(decrypted)
                     tmp.close()
 
-                    print(f"📁 Decrypted file → {tmp.name}")
+                    print(Style.BRIGHT + Fore.CYAN + f" Decrypted file → {tmp.name}")
                 else:
                     decrypted = conn.decrypt(data.encode())
                     print(decrypted.decode(errors="ignore"))
 
             else:
-                print("Commands: encrypt <text|file>, decrypt <text|file>")
+                print(Style.BRIGHT + Fore.CYAN + "Commands: encrypt <text|file>, decrypt <text|file>")
 
     except EOFError:
-        print("\n👋 Disconnected.")
+        print(Style.BRIGHT + Fore.MAGENTA +  + "\nDisconnected.")
 
 
 # =========================
@@ -113,7 +180,7 @@ def cmd_connect(name: str):
 # =========================
 def main():
     if len(sys.argv) < 2:
-        print("Usage: ciphercon <command> [args]")
+        print(Style.BRIGHT + Fore.RED + "Usage: ciphercon <command> [args]")
         return
 
     cmd = sys.argv[1]
@@ -135,10 +202,10 @@ def main():
 
     else:
         print("Commands:")
-        print("  ciphercon create <name>")
-        print("  ciphercon finish <name>")
-        print("  ciphercon key")
-        print("  ciphercon connect <name>")
+        print(Fore.BLUE + " - ciphercon create <name>")
+        print(Fore.BLUE + " - ciphercon finish <name>")
+        print(Fore.BLUE + " - ciphercon key")
+        print(Fore.BLUE + " - ciphercon connect <name>")
 
 
 if __name__ == "__main__":
