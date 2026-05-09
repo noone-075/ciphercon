@@ -1,6 +1,6 @@
 [project]
 name = "ciphercon"
-version = "0.1.0"
+version = "1.0.1"
 description = "Secure peer-to-peer encryption with AES-256-GCM and RSA-2048"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
   "cryptography>=41.0.0",
-  "colorama">=4.6.0
+  "colorama>=4.6.0"
 ]
 
 [project.optional-dependencies]
