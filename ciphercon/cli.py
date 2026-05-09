@@ -21,7 +21,8 @@ from pathlib import Path
 from colorama import (
 Fore,
 Back,
-Style
+Style,
+init
 )
 
 from .core import (
