@@ -50,51 +50,6 @@ def is_file_path(text: str) -> Path | None:
     p = Path(text)
     return p if p.exists() and p.is_file() else None
 
-
-def rle_compress(data_in: str): # Uses RLE data compression algorithm (Run Length Encoding)
-    datastream = data_in
-    result = ''
-    count = 1
-    current_char = datastream[0]
-    
-    for i in range(1, len(datastream)):
-      if datastream[i] == current_char:
-        count += 1
-      else:
-        result += f"{current_char}"
-        if count > 1:
-          result += f"-{count}"
-        else:
-          result += ""
-        current_char = datastream[i]
-        count = 1
-    
-    result += f"{current_char}"
-    if count > 1:
-      result += f"-{count}"
-
-
-
-def rle_decompress(data_in: str): # Uses reverse-RLE data compression algorithm (Run Length Encoding)
-    datastream = data_in
-    d = 0
-    c = 0
-    
-    print('Data Stream :', datastream)
-    print('Decoding RLE :', end = '')
-    
-    for i in range(len(datastream)):
-       if c < len(datastream):
-          if datastream[c] != '-':
-             if c > 0 and datastream[c-1] == '-':
-                 d = int(datastream[c])
-                 for i in range(d-1):
-                    print(datastream[c-2], end = '')
-                 c = c + 1
-             print(datastream[c], end = '')
-          c = c + 1
-
-
 # =========================
 # Commands
 # =========================
