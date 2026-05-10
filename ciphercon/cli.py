@@ -1,5 +1,3 @@
-# hi noone, if I forgot to add colors to any messages, just tell me 
-
 # =========================
 # COLOR CONVENTIONS
 # =========================
