@@ -3,6 +3,7 @@ import os
 import json
 from pathlib import Path
 import cli.
+import tkinter
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
