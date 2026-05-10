@@ -1,4 +1,4 @@
-# Ciphercon 1.2.0
+# Ciphercon v1.2.0
 
 Secure peer-to-peer encryption library using **AES-256-GCM** (symmetric) and **RSA-2048** (asymmetric) encryption.
 ## Creators
