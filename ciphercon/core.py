@@ -2,8 +2,8 @@ import base64
 import os
 import json
 from pathlib import Path
-import cli.
-import tkinter
+
+from cryptography.hazmat.primitives import hashes, serialization
 
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
@@ -35,6 +35,9 @@ def _derive_key(password: bytes, salt: bytes) -> bytes:
 # Setup RSA keys
 # =========================
 def setup():
+    if (config_path / "public_key.pem").exists() or (config_path / "private_key.pem").exists():
+        raise FileExistsError("Keys already exist. Delete them first to regenerate.")
+
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
@@ -60,7 +63,7 @@ def setup():
 def __asymmetric_encrypt(plaintext: bytes, publicKey: bytes) -> bytes:
     public_key = serialization.load_pem_public_key(publicKey)
 
-    ciphertext = public_key.encrypt( # pyright: ignore[reportAttributeAccessIssue]
+    ciphertext = public_key.encrypt(  # pyright: ignore[reportAttributeAccessIssue]
         plaintext,
         padding.OAEP(
             mgf=padding.MGF1(hashes.SHA256()),
@@ -77,7 +80,7 @@ def __asymmetric_decrypt(ciphertext: bytes, privateKey: bytes) -> bytes:
         password=None,
     )
 
-    return private_key.decrypt( # pyright: ignore[reportAttributeAccessIssue]
+    return private_key.decrypt(  # pyright: ignore[reportAttributeAccessIssue]
         base64.b64decode(ciphertext),
         padding.OAEP(
             mgf=padding.MGF1(hashes.SHA256()),
@@ -175,44 +178,49 @@ class Connection:
 
             data = json.loads(path.read_text())
             self.symmetricKey = base64.b64decode(data["key"])
-    def rle_compress(data_in: str): # Uses RLE data compression algorithm (Run Length Encoding)
+
+    @staticmethod
+    def rle_compress(
+        data_in: str,
+    ):  # Uses RLE data compression algorithm (Run Length Encoding)
         datastream = data_in
-        result = ''
+        result = ""
         count = 1
         current_char = datastream[0]
-        
+
         for i in range(1, len(datastream)):
-          if datastream[i] == current_char:
-            count += 1
-          else:
-            result += f"{current_char}"
-            if count > 1:
-              result += f"-{count}"
+            if datastream[i] == current_char:
+                count += 1
             else:
-              result += ""
-            current_char = datastream[i]
-            count = 1
-        
+                result += f"{current_char}"
+                if count > 1:
+                    result += f"-{count}"
+                else:
+                    result += ""
+                current_char = datastream[i]
+                count = 1
+
         result += f"{current_char}"
         if count > 1:
-          result += f"-{count}"
-    
-    
-    
-    def rle_decompress(data_in: str): # Uses reverse-RLE data compression algorithm (Run Length Encoding)
+            result += f"-{count}"
+
+    @staticmethod
+    def rle_decompress(
+        data_in: str,
+    ):  # Uses reverse-RLE data compression algorithm (Run Length Encoding)
         datastream = data_in
         d = 0
         c = 0
         for i in range(len(datastream)):
-           if c < len(datastream):
-              if datastream[c] != '-':
-                 if c > 0 and datastream[c-1] == '-':
-                     d = int(datastream[c])
-                     for i in range(d-1):
-                        print(datastream[c-2], end = '')
-                     c = c + 1
-                 print(datastream[c], end = '')
-              c = c + 1
+            if c < len(datastream):
+                if datastream[c] != "-":
+                    if c > 0 and datastream[c - 1] == "-":
+                        d = int(datastream[c])
+                        for i in range(d - 1):
+                            print(datastream[c - 2], end="")
+                        c = c + 1
+                    print(datastream[c], end="")
+                c = c + 1
 
 
 # =========================
@@ -221,9 +229,7 @@ class Connection:
 def create_connection(name: str, othersPublicKey: bytes, password=None):
     symmetricKey = os.urandom(32)
 
-    encryptedSymmetricKey = __asymmetric_encrypt(
-        symmetricKey, othersPublicKey
-    )
+    encryptedSymmetricKey = __asymmetric_encrypt(symmetricKey, othersPublicKey)
 
     conn = Connection(name, password)
     conn._register(symmetricKey)
@@ -234,9 +240,7 @@ def create_connection(name: str, othersPublicKey: bytes, password=None):
 def finish_connection(name, encryptedSymmetricKey, password=None):
     private_key_pem = (config_path / "private_key.pem").read_bytes()
 
-    symmetricKey = __asymmetric_decrypt(
-        encryptedSymmetricKey, private_key_pem
-    )
+    symmetricKey = __asymmetric_decrypt(encryptedSymmetricKey, private_key_pem)
 
     conn = Connection(name, password)
     conn._register(symmetricKey)

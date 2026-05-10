@@ -1,5 +1,3 @@
-# hi noone, if I forgot to add colors to any messages, just tell me 
-
 # =========================
 # COLOR CONVENTIONS
 # =========================
@@ -18,17 +16,22 @@ import sys
 import tempfile
 from pathlib import Path
 
-from colorama import *
+from colorama import (
+    Style,
+    Fore,
+    init
+)
 
 from .core import (
     create_connection,
     finish_connection,
     get_connection,
     get_public_key,
-    setup
+    setup,
 )
 
 init(autoreset=True)
+
 
 # =========================
 # Helpers
@@ -46,17 +49,22 @@ def is_file_path(text: str) -> Path | None:
     p = Path(text)
     return p if p.exists() and p.is_file() else None
 
+
 # =========================
 # Commands
 # =========================
 def cmd_create(name: str):
     pubkey = read_multiline("Paste OTHER person's public key")
-    password = ask(Style.BRIGHT + Fore. + "Password (optional): ") or None
+    password = ask(Style.BRIGHT + Fore.YELLOW + "Password (optional): ") or None
 
     conn, encrypted_key = create_connection(name, pubkey, password)
 
     print(Style.BRIGHT + Fore.GREEN + "\nConnection created.")
-    print(Style.BRIGHT + Fore.YELLOW + "\nSend this encrypted symmetric key to the other person:\n")
+    print(
+        Style.BRIGHT
+        + Fore.YELLOW
+        + "\nSend this encrypted symmetric key to the other person:\n"
+    )
     print(encrypted_key.decode())
 
 
@@ -120,10 +128,14 @@ def cmd_connect(name: str):
                     print(decrypted.decode(errors="ignore"))
 
             else:
-                print(Style.BRIGHT + Fore.CYAN + "Commands: encrypt <text|file>, decrypt <text|file>")
+                print(
+                    Style.BRIGHT
+                    + Fore.CYAN
+                    + "Commands: encrypt <text|file>, decrypt <text|file>"
+                )
 
     except EOFError:
-        print(Style.BRIGHT + Fore.MAGENTA +  + "\nDisconnected.")
+        print(Style.BRIGHT + Fore.MAGENTA + "\nDisconnected.")
 
 
 # =========================
