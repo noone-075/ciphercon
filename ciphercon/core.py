@@ -251,6 +251,12 @@ def get_connection(name, password=None):
     conn._load_key()
     return conn
 
+def connection_list():
+    connections = []
+    for file in config_path.iterdir():
+        if file.suffix in [".json", ".enc"]:
+            connections.append(file.stem)
+    return connections
 
 # =========================
 # Key access

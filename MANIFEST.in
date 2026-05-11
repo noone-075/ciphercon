@@ -1,5 +1,4 @@
 include README.md
 include LICENCE
 include pyproject.toml
-recursive-exclude * __pycache__
-recursive-exclude * *.py[co]
+recursive-exclude * __pycache__ *.py[co] scripts

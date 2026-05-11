@@ -3,7 +3,7 @@
 This module provides symmetric (AES-256-GCM) and asymmetric (RSA-2048) encryption.
 
 Basic usage:
-    from ciphercon import setup, create_connection, finish_connection, get_connection
+    from ciphercon import setup, create_connection, finish_connection, get_connection, connection_list
     
     # Generate RSA key pair
     setup()
@@ -13,6 +13,11 @@ Basic usage:
     
     # On the other side, finish the connection
     conn = finish_connection("bob", encrypted_key, password="secret")
+
+    # after setting up the connection, you can use it to encrypt and decrypt messages
+    active_connections = connection_list()  # List all active connections
+
+    conn = get_connection("bob", password="secret")
     
     # Encrypt and decrypt messages
     encrypted = conn.encrypt(b"Hello World")
@@ -26,8 +31,7 @@ from .core import (
     get_connection,
     get_public_key,
     setup,
-    # encrypt,
-    # decrypt,
+    connection_list
 )
 
 __all__ = [
@@ -37,7 +41,6 @@ __all__ = [
     "get_connection",
     "get_public_key",
     "setup",
-    # "encrypt",
-    # "decrypt",
+    "connection_list"
 ]
-__version__ = "1.2.1"
+__version__ = "1.2.2"
