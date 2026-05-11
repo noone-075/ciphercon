@@ -1,17 +1,13 @@
-# Ciphercon v1.1.4
+# Ciphercon v1.2.0
 
 Secure peer-to-peer encryption library using **AES-256-GCM** (symmetric) and **RSA-2048** (asymmetric) encryption.
 ## Creators
 
-![Static Badge](https://img.shields.io/badge/noone--075-556B2F)
-
-[@noone_75](https://)
+[![Static Badge](https://img.shields.io/badge/noone--075-556B2F)](https://github.com/noone-075)
 
 With help from:
 
-![Static Badge](https://img.shields.io/badge/sovietdevelopment-FF3322)
-
-[@~The Soviet Union](https://github.com/sovietdevelopment)
+[![Static Badge](https://img.shields.io/badge/sovietdevelopment-FF3322)](https://github.com/sovietdevelopment)
 
 ## Features
 
@@ -20,12 +16,18 @@ With help from:
 - ***PBKDF2-HMAC-SHA256***: Password-based key derivation for encrypted storage
 - ***Persistent connections***: Store encrypted symmetric keys locally
 - ***CLI & API***: Use as a library or command-line tool
+- ***GUI***: Use the library as a every day tool with a pre-made gui
 - ***Type hints***: Full type annotations for better IDE support
 
 ## Installation
 
+if we set up the pip thing
 ```bash
 pip install ciphercon
+```
+or download the lastest .whl in the [releases](https://github.com/noone-075/ciphercon/releases) then install the package
+```bash
+pip install ciphercon-<version>-py3-none-any.whl
 ```
 
 ## Quick Start
@@ -120,6 +122,14 @@ ciphercon connect alice
 > encrypt hello world
 > decrypt <encrypted_text>
 ```
+
+### GUI Usage
+After installing the package, launch the graphical tool with:
+```bash
+ciphercon-gui
+```
+
+If you build a Windows executable, point it at `ciphercon/gui.py` or the `ciphercon-gui` entry point.
 
 ## API Reference
 

@@ -1,15 +1,13 @@
 [project]
 name = "ciphercon"
-version = "1.0.1"
+version = "1.2.0"
 description = "Secure peer-to-peer encryption with AES-256-GCM and RSA-2048"
 readme = "README.md"
 requires-python = ">=3.12"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [
-  { name = "noone-075", email = "developpeur.faucon2@gmail.com" }
-]
-contributors = [
-  { name = "sovietdevelopment", email = "croissanttheultimate@gmai"}
+  { name = "noone-075", email = "developpeur.faucon2@gmail.com" },
+  { name = "sovietdevelopment", email = "croissanttheultimate@gmail.com"}
 ]
 keywords = ["encryption", "cryptography", "aes", "rsa", "cipher", "security"]
 classifiers = [
@@ -25,7 +23,7 @@ classifiers = [
 ]
 dependencies = [
   "cryptography>=41.0.0",
-  "colorama>=4.6.0"
+  "colorama>=0.4.6"
 ]
 
 [project.optional-dependencies]
@@ -39,6 +37,7 @@ Changelog = "https://github.com/noone-075/ciphercon/releases"
 
 [project.scripts]
 ciphercon = "ciphercon.cli:main"
+ciphercon-gui = "ciphercon.gui:main"
 
 [build-system]
 requires = ["setuptools>=65.0", "wheel"]
