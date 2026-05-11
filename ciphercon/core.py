@@ -1,6 +1,7 @@
 import base64
 import os
 import json
+import zstandard as zsys
 from pathlib import Path
 
 from cryptography.hazmat.primitives import hashes, serialization
@@ -16,6 +17,15 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 # =========================
 config_path = Path.home() / ".ciphercon"
 config_path.mkdir(exist_ok=True)
+
+# =========================
+# Compression constants
+# =========================
+cctx = zsys.ZstdCompressor(level=9)
+dctx = zsys.ZstdDecompressor()
+
+compress = cctx.compress
+decompress = dctx.decompress
 
 
 # =========================
@@ -35,7 +45,9 @@ def _derive_key(password: bytes, salt: bytes) -> bytes:
 # Setup RSA keys
 # =========================
 def setup():
-    if (config_path / "public_key.pem").exists() or (config_path / "private_key.pem").exists():
+    if (config_path / "public_key.pem").exists() or (
+        config_path / "private_key.pem"
+    ).exists():
         raise FileExistsError("Keys already exist. Delete them first to regenerate.")
 
     private_key = rsa.generate_private_key(
@@ -128,12 +140,12 @@ class Connection:
     def encrypt(self, plaintext: bytes) -> bytes:
         if not self.symmetricKey:
             raise ValueError("No symmetric key loaded")
-        return aes_encrypt(plaintext, self.symmetricKey)
+        return aes_encrypt(compress(plaintext), self.symmetricKey)
 
     def decrypt(self, ciphertext: bytes) -> bytes:
         if not self.symmetricKey:
             raise ValueError("No symmetric key loaded")
-        return aes_decrypt(ciphertext, self.symmetricKey)
+        return decompress(aes_decrypt(ciphertext, self.symmetricKey))
 
     def _register(self, symmetricKey: bytes):
         self.symmetricKey = symmetricKey
@@ -179,47 +191,6 @@ class Connection:
             data = json.loads(path.read_text())
             self.symmetricKey = base64.b64decode(data["key"])
 
-def rle_compress(
-    data_in: str,
-):  # Uses RLE data compression algorithm (Run Length Encoding)
-    datastream = data_in
-    result = ""
-    count = 1
-    current_char = datastream[0]
-
-    for i in range(1, len(datastream)):
-        if datastream[i] == current_char:
-            count += 1
-        else:
-            result += f"{current_char}"
-            if count > 1:
-                result += f"-{count}"
-            else:
-                result += ""
-            current_char = datastream[i]
-            count = 1
-
-    result += f"{current_char}"
-    if count > 1:
-        result += f"-{count}"
-
-def rle_decompress(
-    data_in: str,
-):  # Uses reverse-RLE data compression algorithm (Run Length Encoding)
-    datastream = data_in
-    d = 0
-    c = 0
-    for i in range(len(datastream)):
-        if c < len(datastream):
-            if datastream[c] != "-":
-                if c > 0 and datastream[c - 1] == "-":
-                    d = int(datastream[c])
-                    for i in range(d - 1):
-                        print(datastream[c - 2], end="")
-                    c = c + 1
-                print(datastream[c], end="")
-            c = c + 1
-
 
 # =========================
 # Connection API
@@ -251,12 +222,14 @@ def get_connection(name, password=None):
     conn._load_key()
     return conn
 
+
 def connection_list():
     connections = []
     for file in config_path.iterdir():
         if file.suffix in [".json", ".enc"]:
             connections.append(file.stem)
     return connections
+
 
 # =========================
 # Key access
