@@ -1,10 +1,10 @@
 [project]
 name = "ciphercon"
-version = "1.2.0"
+version = "1.2.1"
 description = "Secure peer-to-peer encryption with AES-256-GCM and RSA-2048"
 readme = "README.md"
 requires-python = ">=3.12"
-license = { file = "LICENSE" }
+license-files = ["LICENCE"]
 authors = [
   { name = "noone-075", email = "developpeur.faucon2@gmail.com" },
   { name = "sovietdevelopment", email = "croissanttheultimate@gmail.com"}
@@ -13,7 +13,6 @@ keywords = ["encryption", "cryptography", "aes", "rsa", "cipher", "security"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
